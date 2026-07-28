@@ -17,12 +17,22 @@ public class StoreEventObserver {
   // Observe asynchronously, but only after the transaction has successfully committed
   public void onStoreCreated(@ObservesAsync(during = TransactionPhase.AFTER_SUCCESS) StoreCreatedEvent event) {
     LOGGER.info("Store created event received, syncing with legacy system: " + event.getStore().id);
-    legacyStoreManagerGateway.createStoreOnLegacySystem(event.getStore());
+    try {
+      legacyStoreManagerGateway.createStoreOnLegacySystem(event.getStore());
+    } catch (Exception ex) {
+      LOGGER.errorf(ex, "Failed syncing store %s to legacy system", event.getStore().id);
+      // consider retrying or sending to a dead-letter queue in production
+    }
   }
 
   // Observe asynchronously, but only after the transaction has successfully committed
   public void onStoreUpdated(@ObservesAsync(during = TransactionPhase.AFTER_SUCCESS) StoreUpdatedEvent event) {
     LOGGER.info("Store updated event received, syncing with legacy system: " + event.getStore().id);
-    legacyStoreManagerGateway.updateStoreOnLegacySystem(event.getStore());
+    try {
+      legacyStoreManagerGateway.updateStoreOnLegacySystem(event.getStore());
+    } catch (Exception ex) {
+      LOGGER.errorf(ex, "Failed syncing updated store %s to legacy system", event.getStore().id);
+      // consider retrying or sending to a dead-letter queue in production
+    }
   }
 }
