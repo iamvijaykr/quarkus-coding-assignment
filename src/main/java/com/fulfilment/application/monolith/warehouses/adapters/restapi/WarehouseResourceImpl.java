@@ -8,22 +8,27 @@ import com.warehouse.api.WarehouseResource;
 import com.warehouse.api.beans.Warehouse;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
 
 @RequestScoped
 public class WarehouseResourceImpl implements WarehouseResource {
 
-  @Inject private WarehouseRepository warehouseRepository;
-  @Inject private CreateWarehouseOperation createWarehouseOperation;
-  @Inject private ArchiveWarehouseOperation archiveWarehouseOperation;
-  @Inject private ReplaceWarehouseOperation replaceWarehouseOperation;
+  @Inject private Provider<WarehouseRepository> warehouseRepository;
+  @Inject private Provider<CreateWarehouseOperation> createWarehouseOperation;
+  @Inject private Provider<ArchiveWarehouseOperation> archiveWarehouseOperation;
+  @Inject private Provider<ReplaceWarehouseOperation> replaceWarehouseOperation;
 
   @Override
   public List<Warehouse> listAllWarehousesUnits() {
-    return warehouseRepository.getAll().stream().map(this::toWarehouseResponse).toList();
+    return warehouseRepository.get().getAll().stream().map(this::toWarehouseResponse).toList();
   }
 
   @Override
@@ -38,7 +43,7 @@ public class WarehouseResourceImpl implements WarehouseResource {
 
     try {
       // Create warehouse through use case (includes validations)
-      createWarehouseOperation.create(domainWarehouse);
+      createWarehouseOperation.get().create(domainWarehouse);
       
       // Return the created warehouse
       return toWarehouseResponse(domainWarehouse);
@@ -50,7 +55,7 @@ public class WarehouseResourceImpl implements WarehouseResource {
   @Override
   public Warehouse getAWarehouseUnitByID(String id) {
     // Find warehouse by business unit code
-    var domainWarehouse = warehouseRepository.findByBusinessUnitCode(id);
+    var domainWarehouse = warehouseRepository.get().findByBusinessUnitCode(id);
     
     if (domainWarehouse == null) {
       throw new WebApplicationException("Warehouse with business unit code '" + id + "' not found", 404);
@@ -59,11 +64,30 @@ public class WarehouseResourceImpl implements WarehouseResource {
     return toWarehouseResponse(domainWarehouse);
   }
 
+  @GET
+  @Path("search")
+  @Produces("application/json")
+  public java.util.List<Warehouse> search(
+      @QueryParam("location") String location,
+      @QueryParam("minCapacity") Integer minCapacity,
+      @QueryParam("maxCapacity") Integer maxCapacity,
+      @QueryParam("sortBy") String sortBy,
+      @QueryParam("sortOrder") String sortOrder,
+      @QueryParam("page") Integer page,
+      @QueryParam("pageSize") Integer pageSize) {
+    return warehouseRepository
+        .get()
+        .search(location, minCapacity, maxCapacity, sortBy, sortOrder, page, pageSize)
+        .stream()
+        .map(this::toWarehouseResponse)
+        .toList();
+  }
+
   @Override
   @Transactional
   public void archiveAWarehouseUnitByID(String id) {
     // Find warehouse by business unit code
-    var domainWarehouse = warehouseRepository.findByBusinessUnitCode(id);
+    var domainWarehouse = warehouseRepository.get().findByBusinessUnitCode(id);
 
     if (domainWarehouse == null) {
       throw new WebApplicationException("Warehouse with business unit code '" + id + "' not found", 404);
@@ -71,7 +95,7 @@ public class WarehouseResourceImpl implements WarehouseResource {
 
     try {
       // Archive warehouse through use case (includes validations)
-      archiveWarehouseOperation.archive(domainWarehouse);
+      archiveWarehouseOperation.get().archive(domainWarehouse);
     } catch (IllegalArgumentException e) {
       throw new WebApplicationException(e.getMessage(), 400);
     }
@@ -90,10 +114,10 @@ public class WarehouseResourceImpl implements WarehouseResource {
 
     try {
       // Replace warehouse through use case (includes validations)
-      replaceWarehouseOperation.replace(domainWarehouse);
+      replaceWarehouseOperation.get().replace(domainWarehouse);
 
       // Return the updated warehouse
-      var updated = warehouseRepository.findByBusinessUnitCode(businessUnitCode);
+      var updated = warehouseRepository.get().findByBusinessUnitCode(businessUnitCode);
       return toWarehouseResponse(updated);
     } catch (IllegalArgumentException e) {
       throw new WebApplicationException(e.getMessage(), 400);

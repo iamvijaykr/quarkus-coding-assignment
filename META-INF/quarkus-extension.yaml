@@ -1,0 +1,12 @@
+---
+metadata:
+  built-with-quarkus-core: "3.13.2"
+  requires-quarkus-core: "[3.13,)"
+  minimum-java-version: "17"
+  scm-url: "https://github.com/quarkiverse/quarkus-openapi-generator"
+  extension-dependencies:
+  - "io.quarkus:quarkus-core"
+artifact: "io.quarkiverse.openapi.generator:quarkus-openapi-generator-server::jar:2.4.7"
+name: "Quarkus - Openapi Generator - Server"
+description: "Parent POM for Quarkiverse projects that includes the default release\
+  \ and artifact publishing related\n    configuration"

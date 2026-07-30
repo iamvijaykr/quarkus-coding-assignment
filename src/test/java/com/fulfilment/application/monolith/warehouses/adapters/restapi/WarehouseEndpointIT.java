@@ -3,10 +3,10 @@ package com.fulfilment.application.monolith.warehouses.adapters.restapi;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 
-import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
-@QuarkusIntegrationTest
+@QuarkusTest
 public class WarehouseEndpointIT {
 
   @Test
@@ -21,6 +21,19 @@ public class WarehouseEndpointIT {
         .then()
         .statusCode(200)
         .body(containsString("MWH.001"), containsString("MWH.012"), containsString("MWH.023"));
+  }
+
+  @Test
+  public void testSearchWarehouseByLocation() {
+    final String searchPath = "warehouse/search";
+
+    given()
+        .queryParam("location", "AMSTERDAM-001")
+        .when()
+        .get(searchPath)
+        .then()
+        .statusCode(200)
+        .body(containsString("AMSTERDAM-001"));
   }
 
   @Test

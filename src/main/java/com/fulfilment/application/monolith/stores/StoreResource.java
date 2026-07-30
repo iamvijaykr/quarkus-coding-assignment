@@ -7,6 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -34,6 +35,9 @@ public class StoreResource {
   
   @Inject Event<StoreUpdatedEvent> storeUpdatedEvent;
 
+  @Inject
+  EntityManager em;
+
   private static final Logger LOGGER = Logger.getLogger(StoreResource.class.getName());
 
   @GET
@@ -59,7 +63,9 @@ public class StoreResource {
     }
 
     store.persist();
-    storeCreatedEvent.fireAsync(new StoreCreatedEvent(store));
+    // Force DB constraints to be checked now; if flush fails, we won't notify legacy system
+    em.flush();
+    legacyStoreManagerGateway.createStoreOnLegacySystem(store);
 
     return Response.ok(store).status(201).build();
   }
@@ -81,7 +87,8 @@ public class StoreResource {
     entity.name = updatedStore.name;
     entity.quantityProductsInStock = updatedStore.quantityProductsInStock;
 
-    storeUpdatedEvent.fireAsync(new StoreUpdatedEvent(entity));
+    em.flush();
+    legacyStoreManagerGateway.updateStoreOnLegacySystem(entity);
 
     return entity;
   }
@@ -108,7 +115,8 @@ public class StoreResource {
       entity.quantityProductsInStock = updatedStore.quantityProductsInStock;
     }
 
-    storeUpdatedEvent.fireAsync(new StoreUpdatedEvent(entity));
+    em.flush();
+    legacyStoreManagerGateway.updateStoreOnLegacySystem(entity);
 
     return entity;
   }

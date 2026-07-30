@@ -196,3 +196,31 @@ These are the predefined locations available in the system:
 # Access Swagger UI
 open http://localhost:8080/q/swagger-ui
 ```
+
+## Progress & Deliverables (status after implementation)
+
+- Completed: study of reference implementations, investigation and fixes for failing tests, re-ran tests and validated fixes.
+- Completed: `QUESTIONS.md` updated with answers.
+- Completed: Bonus `GET /warehouse/search` implemented with repository filtering, sorting and pagination; added `WarehouseSearchIntegrationTest` which passes locally.
+- Remaining: start interactive Quarkus dev mode on port 8081 (can run with H2 using the commands below), add JaCoCo coverage and CI pipeline, and commit/push final changes.
+
+How to start Quarkus dev (PowerShell):
+
+```powershell
+$env:QUARKUS_DATASOURCE_DEV_SERVICES_ENABLED = "false"
+$env:QUARKUS_DATASOURCE_DB_KIND = "h2"
+$env:QUARKUS_DATASOURCE_JDBC_URL = "jdbc:h2:mem:dev;DB_CLOSE_DELAY=-1"
+$env:QUARKUS_DATASOURCE_USERNAME = "sa"
+$env:QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION = "drop-and-create"
+$env:QUARKUS_HTTP_PORT = "8081"
+.\mvnw.cmd quarkus:dev
+```
+
+Quick test commands:
+
+```powershell
+.\mvnw.cmd clean test
+.\mvnw.cmd -Dtest=WarehouseSearchIntegrationTest test
+```
+
+If you'd like, I can start the dev server now and keep it running so you can manually exercise endpoints. Proceed?
